@@ -78,33 +78,17 @@ class AttentionBlock(nn.Module):
 
     def forward(self, x):
         b, c, h, w = x.shape
+        org_x = x
 
         x = self.norm_layer(x)
 
         # x is an image with (B, C, H, W) that needs to be rolled into (B, H*W, C) for Attention
         # Attention input for NLP is (B, seq_len, num_embeds)
         x = x.view(b, c, h*w).transpose(1, 2)
-        attn_out, _ = self.attn_layer(x)
+        attn_out, _ = self.attn_layer(x, x, x)
 
         # Reverse the input operations of swap and flatten
         attn_out = attn_out.transpose(1, 2).view(b, c, h, w)
 
-        return attn_out
-
-
-class ProjectionLayer(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x):
-        raise NotImplementedError
-        return x
-
-
-class SkipConnection(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x):
-        raise NotImplementedError
-        return x
+        out = org_x + attn_out
+        return out
